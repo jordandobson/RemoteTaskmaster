@@ -69,9 +69,10 @@ end
 
 # New requirements:
 # 
-# * The server should keep the list of defined tasks for the life of the server… that is, if you disconnect and reconnect the client, the tasks should stay defined
+# * The server should keep the list of defined tasks for the life of the server that is, if you disconnect and reconnect the client, the tasks should stay defined
 # * Add a method called "run_list_for" that takes a task name as an argument and returns the complete list of tasks, in order, to satisfy its dependencies and run the task
 # 
 # Notes:
 # 
-# * Running a single task multiple times should execute the dependencies each time… that is, track the dependencies in the scope of a single Taskmaster.run call
+# * Running a single task multiple times should execute the dependencies each time
+that is, track the dependencies in the scope of a single Taskmaster.run call
