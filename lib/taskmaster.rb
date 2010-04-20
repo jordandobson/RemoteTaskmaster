@@ -1,8 +1,7 @@
 class Taskmaster
-
   VERSION = '1.0.0'
   TASKS   = {}
-  
+
   @@job_list = []
 
   def self.cookbook(&block)
@@ -45,7 +44,7 @@ class Taskmaster
   def self.recipeMissingMessage(job)
     "Task(s): #{job} not in Taskmaster cookbook"
   end
-  
+
   def self.missing_dependencies?
     missing_deps = []
     TASKS.values.each do |v|
@@ -55,23 +54,30 @@ class Taskmaster
     end
     raise StandardError, recipeMissingMessage(missing_deps.join(", ")) unless missing_deps.empty?
   end
-  
-  def self.run_list_for job
+
+  def self.run_list_for(job)
     t = TASKS[job]
-    if t[:deps].any?
-      t[:deps].each do |dep|
-        run_list_for dep
-      end
+    deps = []
+    t[:deps].each do |dep|
+      deps << run_list_for(dep)
     end
-    @@job_list << job unless @@job_list.include?(job)
+    deps << job
+
+    # flatten the array to 1-dimensional
+    deps.flatten!
+
+    # remove dups
+    deps.uniq!
+
+    deps
   end
 end
 
 # New requirements:
-# 
+#
 # * The server should keep the list of defined tasks for the life of the server that is, if you disconnect and reconnect the client, the tasks should stay defined
 # * Add a method called "run_list_for" that takes a task name as an argument and returns the complete list of tasks, in order, to satisfy its dependencies and run the task
-# 
+#
 # Notes:
-# 
+#
 # * Running a single task multiple times should execute the dependencies each time that is, track the dependencies in the scope of a single Taskmaster.run call

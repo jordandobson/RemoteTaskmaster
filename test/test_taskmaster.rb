@@ -4,7 +4,6 @@ require "taskmaster"
 class TestTaskmaster < Test::Unit::TestCase
 
   def setup
-
     ###
     # Setup Class
 
@@ -47,12 +46,10 @@ class TestTaskmaster < Test::Unit::TestCase
 
     ###
     # Collect Output
-
     def @tm.puts arg
       @@output ||= []
       @@output << arg if arg
     end
-
   end
 
   ###
@@ -78,7 +75,6 @@ class TestTaskmaster < Test::Unit::TestCase
 
   ###
   # Test Task
-
   def test_cookbook_recipe_creates_only_one_task
     @clear.call
     @tm.cookbook do
@@ -104,7 +100,7 @@ class TestTaskmaster < Test::Unit::TestCase
     end
     assert_equal 3, @tm::TASKS.length
   end
-  
+
   def test_cookbook_task_raises_on_missing_dependency
     assert_raise StandardError do
       @tm.cookbook do
@@ -244,8 +240,6 @@ class TestTaskmaster < Test::Unit::TestCase
 
   ###
   # Test Run List For
-  
-
   def test_run_list_for_large_dependencies
     @task.call
     expected     = [:mop, :handwash, :clean, :meat, :bread, :sandwich]
@@ -259,22 +253,11 @@ class TestTaskmaster < Test::Unit::TestCase
     actual       = Taskmaster.run_list_for(:mop)
     assert_equal expected, actual
   end
-  
+
   def test_run_list_for_invalid_task
     @task.call
-    assert_raise NoMethodError do 
+    assert_raise NoMethodError do
       @tm.run_list_for(:invalid)
     end
   end
-  
-  
-  
-  
-##########  
-#   TO DO
-# 
-# * Define a bunch of tasks for the server
-# * Disconnect and reconnect and see if they are still there.
-# * 
-
 end
