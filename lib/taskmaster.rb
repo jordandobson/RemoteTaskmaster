@@ -74,5 +74,4 @@ end
 # 
 # Notes:
 # 
-# * Running a single task multiple times should execute the dependencies each time
-that is, track the dependencies in the scope of a single Taskmaster.run call
+# * Running a single task multiple times should execute the dependencies each time that is, track the dependencies in the scope of a single Taskmaster.run call
