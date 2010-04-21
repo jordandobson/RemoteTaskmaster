@@ -2,8 +2,6 @@ class Taskmaster
 
   VERSION = '1.0.0'
   TASKS   = {}
-  
-  @@job_list = []
 
   def self.cookbook(&block)
     raise ArgumentError, "This requires a block" unless block
@@ -58,12 +56,14 @@ class Taskmaster
   
   def self.run_list_for job
     t = TASKS[job]
-    if t[:deps].any?
-      t[:deps].each do |dep|
-        run_list_for dep
-      end
+    deps = []
+    t[:deps].each do |dep|
+      deps << run_list_for(dep)
     end
-    @@job_list << job unless @@job_list.include?(job)
+    deps << job
+    deps.flatten!
+    deps.uniq!
+    deps
   end
 end
 

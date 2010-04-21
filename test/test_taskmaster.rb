@@ -249,14 +249,14 @@ class TestTaskmaster < Test::Unit::TestCase
   def test_run_list_for_large_dependencies
     @task.call
     expected     = [:mop, :handwash, :clean, :meat, :bread, :sandwich]
-    actual       = Taskmaster.run_list_for(:sandwich)
+    actual       = @tm.run_list_for(:sandwich)
     assert_equal expected, actual
   end
 
   def test_run_list_for_small_dependencies
     @task.call
-    expected     = [:mop]
-    actual       = Taskmaster.run_list_for(:mop)
+    expected     = [:mop, :handwash, :clean]
+    actual       = @tm.run_list_for(:clean)
     assert_equal expected, actual
   end
   
@@ -266,10 +266,7 @@ class TestTaskmaster < Test::Unit::TestCase
       @tm.run_list_for(:invalid)
     end
   end
-  
-  
-  
-  
+
 ##########  
 #   TO DO
 # 
