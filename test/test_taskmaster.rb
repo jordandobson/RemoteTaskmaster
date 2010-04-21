@@ -58,18 +58,6 @@ class TestTaskmaster < Test::Unit::TestCase
   ###
   # Test Cookbook
 
-  def test_cookbook_raises_without_block
-    assert_raise ArgumentError do
-      @tm.cookbook
-    end
-  end
-
-  def test_cookbook_raises_with_string
-    assert_raise ArgumentError do
-      @tm.cookbook 'hello'
-    end
-  end
-
   def test_cookbook_evals_block
     actual       = @tm.cookbook { self::VERSION }
     expected     = '1.0.0'
@@ -79,7 +67,7 @@ class TestTaskmaster < Test::Unit::TestCase
   ###
   # Test Task
 
-  def test_cookbook_recipe_creates_only_one_task
+  def test_cookbook_task_creates_only_one_task
     @clear.call
     @tm.cookbook do
       task :only_one do
@@ -89,7 +77,7 @@ class TestTaskmaster < Test::Unit::TestCase
     assert_equal 1, @tm::TASKS.length
   end
 
-  def test_cookbook_recipe_creates_three_tasks
+  def test_cookbook_task_creates_three_tasks
     @clear.call
     @tm.cookbook do
       task :one, :two do
@@ -118,7 +106,7 @@ class TestTaskmaster < Test::Unit::TestCase
     end
   end
 
-  def test_recipie_sets_no_task_dependency
+  def test_task_sets_no_task_dependency
     @task.call
     actual       = @tm::TASKS[:mop][:deps]
     expected     = []
@@ -150,46 +138,30 @@ class TestTaskmaster < Test::Unit::TestCase
   ###
   # Test Execute
 
-  def test_execute_task_with_no_dependencies_is_set_to_met
+  def test_execute_task_with_no_dependencies_is_met
     @task.call
     @tm.execute :mop
-    assert @tm::TASKS[:mop][:met]
+    assert @@output.include?("mopping!")
   end
 
   def test_execute_task_with_no_dependencies_does_labor
     @task.call
     @tm.execute :mop
     actual       = @@output
-    expected     = ["** Executing task 'mop'", "mopping!"]
+    expected     = ["** Executing task 'mop'", "mopping!", "** done"]
     assert_equal expected, actual
-  end
-
-  def test_execute_task_with_multiple_dependencies_is_set_to_met
-    @task.call
-    @tm.execute :clean
-    assert @tm::TASKS[:mop     ][:met]
-    assert @tm::TASKS[:handwash][:met]
-    assert @tm::TASKS[:clean   ][:met]
   end
 
   def test_execute_task_with_with_multiple_dependencies_does_labor
     @task.call
-    @tm.execute :clean
-    assert_equal @@output, [  "** Executing task 'clean'"                 ,
-                              "  ** Executing dependent task 'mop'"       ,
-                              "mopping!"                                  ,
-                              "  ** Executing dependent task 'handwash'"  ,
-                              "washing hands"                             ,
-                              "cleaning"                                  ]
+    @tm.execute [:mop, :handwash, :clean]
+    actual = @@output
+    expected = ["** Executing task 'mop'", "mopping!", "** Executing task 'handwash'", "washing hands", "** Executing task 'clean'", "cleaning", "** done"]
+    assert_equal expected, actual
   end
 
   ###
   # Test Run
-
-  def test_unrun_task_is_set_to_met
-    @task.call
-    assert_equal false, @tm::TASKS[:mop][:met]
-  end
 
   def test_task_does_not_exist
     assert_raise StandardError do
@@ -200,52 +172,44 @@ class TestTaskmaster < Test::Unit::TestCase
   def test_run_executes_single_recipe
     @task.call
     @tm.run :mop
-    assert_equal @@output, ["** Executing task 'mop'", "mopping!", "** done"]
+    assert_equal @@output, [  "** Executing task 'mop'"       ,
+                              "mopping!"                      ,
+                              "** done"                       ]
   end
 
   def test_run_executes_single_recipe_with_dependencies
     @task.call
-    @tm.run :clean
-    assert_equal @@output, [  "** Executing task 'clean'"                 ,
-                              "  ** Executing dependent task 'mop'"       ,
-                              "mopping!"                                  ,
-                              "  ** Executing dependent task 'handwash'"  , 
-                              "washing hands"                             ,
-                              "cleaning"                                  ,
-                              "** done"                                   ]
-  end
-
-  def test_run_should_reset_all_met_tasks_once_complete
-    @task.call
-    expected = @tm::TASKS.inspect
-    @tm.run :sandwich
-    actual   = @tm::TASKS.inspect
-    assert_equal expected, actual
+    @tm.run(@tm.run_list_for :clean)
+    assert_equal @@output, [  "** Executing task 'mop'"       ,
+                              "mopping!"                      ,
+                              "** Executing task 'handwash'"  , 
+                              "washing hands"                 ,
+                              "** Executing task 'clean'"     ,
+                              "cleaning"                      ,
+                              "** done"                       ]
   end
 
   def test_run_task_builds_sandwich_and_outputs_correctly
     @task.call
-    @tm.run :sandwich
-    assert_equal @@output, [  "** Executing task 'sandwich'"                    ,
-                              "  ** Executing dependent task 'meat'"            ,
-                              "    ** Executing dependent task 'clean'"         ,
-                              "      ** Executing dependent task 'mop'"         ,
-                              "mopping!"                                        ,
-                              "      ** Executing dependent task 'handwash'"    ,
-                              "washing hands"                                   ,
-                              "cleaning"                                        ,
-                              "preparing the meat"                              ,
-                              "  ** Executing dependent task 'bread'"           ,
-                              "    ** Skipping completed dependency 'clean'"    ,
-                              "preparing the bread"                             ,
-                              "making a sammich!"                               ,
-                              "** done"                                         ]
+    @tm.run( @tm.run_list_for(:sandwich))
+    assert_equal @@output, [  "** Executing task 'mop'"       ,
+                              "mopping!"                      ,
+                              "** Executing task 'handwash'"  ,
+                              "washing hands"                 ,
+                              "** Executing task 'clean'"     ,
+                              "cleaning"                      ,
+                              "** Executing task 'meat'"      ,
+                              "preparing the meat"            ,
+                              "** Executing task 'bread'"     ,
+                              "preparing the bread"           ,
+                              "** Executing task 'sandwich'"  ,
+                              "making a sammich!"             ,
+                              "** done"                       ]
   end
 
   ###
   # Test Run List For
   
-
   def test_run_list_for_large_dependencies
     @task.call
     expected     = [:mop, :handwash, :clean, :meat, :bread, :sandwich]
@@ -262,16 +226,36 @@ class TestTaskmaster < Test::Unit::TestCase
   
   def test_run_list_for_invalid_task
     @task.call
-    assert_raise NoMethodError do 
+    assert_raise StandardError do 
       @tm.run_list_for(:invalid)
     end
   end
-
-##########  
-#   TO DO
-# 
-# * Define a bunch of tasks for the server
-# * Disconnect and reconnect and see if they are still there.
-# * 
+  
+  def test_run_list_for_and_call_run
+    @task.call
+    list1 = @tm.run_list_for(:sandwich)
+    list2 = @tm.run_list_for(:clean)
+    @tm.run(list1, list2)
+    assert_equal @@output, [  "** Executing task 'mop'"       ,
+                              "mopping!"                      ,
+                              "** Executing task 'handwash'"  ,
+                              "washing hands"                 ,
+                              "** Executing task 'clean'"     ,
+                              "cleaning"                      ,
+                              "** Executing task 'meat'"      ,
+                              "preparing the meat"            ,
+                              "** Executing task 'bread'"     ,
+                              "preparing the bread"           ,
+                              "** Executing task 'sandwich'"  ,
+                              "making a sammich!"             ,
+                              "** done"                       ,
+                              "** Executing task 'mop'"       ,
+                              "mopping!"                      ,
+                              "** Executing task 'handwash'"  ,
+                              "washing hands"                 ,
+                              "** Executing task 'clean'"     ,
+                              "cleaning"                      ,
+                              "** done"                       ]
+  end
 
 end
