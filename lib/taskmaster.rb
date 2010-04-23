@@ -1,3 +1,5 @@
+require 'drb'
+
 module Taskmaster
 
   VERSION = '1.0.0'
@@ -5,7 +7,7 @@ module Taskmaster
 
   def self.cookbook(&block)
     raise ArgumentError, "This requires a block" unless block
-    return_block = module_eval(&block)
+    return_block = instance_eval(&block)
     return_block unless missing_dependencies?
   end
   
@@ -58,4 +60,5 @@ module Taskmaster
     deps.uniq!
     deps
   end
+  
 end

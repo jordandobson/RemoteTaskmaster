@@ -17,10 +17,6 @@ end
 server = RemoteTaskmasterServer.new
 
 
-
-
-
-
 # require 'drb'
 # require 'taskmaster'
 # uri = "druby://localhost:64105"

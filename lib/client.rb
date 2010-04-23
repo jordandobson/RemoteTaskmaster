@@ -9,6 +9,7 @@ class RemoteTaskmasterClient
   def initialize
     DRb.start_service
     @proxy = DRbObject.new_with_uri(URI)
+    @proxy.extend DRbUndumped
   end
   
   def do_stuff_that_works
@@ -18,7 +19,7 @@ class RemoteTaskmasterClient
     end
     
     puts @proxy.returnTasks
-    @proxy.run(:sayHello)  
+    @proxy.run(:sayHello)
   end
 
   def do_stuff_that_breaks
@@ -38,6 +39,10 @@ client = RemoteTaskmasterClient.new
 client.do_stuff_that_works
 client.do_stuff_that_breaks
 
+
+###########
+# Leftovers
+#
 # proxy = DRbObject.new(nil, uri)
 # puts proxy.run_list_for(:eat).inspect
 # proxy.cookbook do
